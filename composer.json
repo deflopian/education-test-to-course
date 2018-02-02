@@ -1,0 +1,23 @@
+{
+    "name": "deflopian/education-test-to-course",
+    "type": "library",
+    "license": "MIT",
+    "description": "A Laravel module which provide connection between Courses/Lessons and Tests-Questions-Variants module. Alpha version, not recommended to use in production",
+    "authors": [
+        {
+            "name": "Vadim Bannov",
+            "email": "deflopian@gmail.com"
+        }
+    ],
+    "version": "0.1.0",
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.0.0",
+        "deflopian/education-tests": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Deflopian\\EducationTestToCourse\\": "src"
+        }
+    }
+}
