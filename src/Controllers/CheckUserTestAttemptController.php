@@ -7,7 +7,11 @@ use Deflopian\EducationTests\Models\UserTestAttempt;
 use Deflopian\EducationTests\Models\Test;
 use Deflopian\EducationTests\Models\Question;
 use App\UserCourse;
+use App\Lesson;
+use App\Course;
 use App\UserLesson;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -49,7 +53,6 @@ class CheckUserTestAttemptController extends Controller
             $success_percentage = $mistakes_count > 0 ? 0 : 1;
         }
 
-
         $test_to_courses = TestToCourse::whereTestId($user_attempt->test_id)->get();
         foreach ($test_to_courses as $test_to_course) {
             $user_course = UserCourse::whereCourseId($test_to_course->course_id)->first();
@@ -60,6 +63,9 @@ class CheckUserTestAttemptController extends Controller
         }
 
         $test_to_lessons = TestToLesson::whereTestId($user_attempt->test_id)->get();
+        $send_mail = Config::get('education-test-to-course.send_success_mail');
+        $admin_mail = Config::get('education-test-to-course.admin_email');
+        $admin_name = Config::get('education-test-to-course.admin_name');
 
         foreach ($test_to_lessons as $test_to_lesson) {
 
@@ -67,6 +73,31 @@ class CheckUserTestAttemptController extends Controller
             if (isset($user_lesson->result) && $user_lesson->result < $success_percentage) {
                 $user_lesson->result = $success_percentage;
                 $user_lesson->save();
+            }
+
+            if ($send_mail) {
+                $lesson = Lesson::find($test_to_lesson->lesson_id);
+
+                Mail::send('mail.lesson_test_passed_success', [
+                    'lesson_title' => $lesson->title,
+                    'lesson_link' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/lessons/' . $lesson->id,
+                    'course_title' => $lesson->course ? $lesson->course->title : '',
+                    'course_link' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/courses/' . $lesson->course_id,
+
+                    'allowable_mistakes_count' => $test->allowable_mistakes_count,
+                    'right_answers' => $user_attempt->result,
+                    'total_questions_count' => $count_questions,
+                    'success_percentage' => round($user_attempt->result * 100 / $count_questions, 1),
+
+                    'first_name' => $user->first_name,
+                    'second_name' => $user->second_name,
+                    'surname' => $user->surname,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                ], function($message) use ($admin_mail, $admin_name) {
+                    $message->to($admin_mail, $admin_name)
+                        ->subject('Пользователь успешно завершил тест');
+                });
             }
         }
 

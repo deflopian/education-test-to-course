@@ -24,6 +24,10 @@ class EducationTestToCourseServiceProvider extends ServiceProvider
             __DIR__.'/../config/config.php' => config_path('education-test-to-course.php'),
         ]);
 
+        $this->publishes([
+            __DIR__.'/../Views/mail' => resource_path('views/mail'),
+        ]);
+
         // Register commands
         $this->commands('command.education-test-to-course.migration');
     }
@@ -40,6 +44,7 @@ class EducationTestToCourseServiceProvider extends ServiceProvider
         $this->registerCommands();
 
         $this->mergeConfig();
+        $this->loadViews();
     }
 
     /**
@@ -74,6 +79,16 @@ class EducationTestToCourseServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/../config/config.php', 'education-test-to-course'
         );
+    }
+
+    /**
+     * Merges user's and tests's configs.
+     *
+     * @return void
+     */
+    private function loadViews()
+    {
+        $this->loadViewsFrom(__DIR__.'/../Views', 'education-test-to-course');
     }
 
     /**
